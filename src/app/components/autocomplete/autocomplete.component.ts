@@ -1,9 +1,9 @@
-import { Component, OnInit, signal, effect } from '@angular/core';
+import {Component, OnInit, signal, effect, OnDestroy} from '@angular/core';
 import {FormControl, ReactiveFormsModule} from '@angular/forms';
-import { NgForOf, NgIf } from "@angular/common";
-import { AutocompleteItem } from "../../models/autocomplete.model";
-import { AutocompleteDataService } from "../../services/autocomplete-data.service";
-import {take} from "rxjs";
+import {NgForOf, NgIf} from "@angular/common";
+import {Subject, take, takeUntil} from "rxjs";
+import {AutocompleteItem} from "../../models/autocomplete.model";
+import {AutocompleteDataService} from "../../services/autocomplete-data.service";
 
 
 @Component({
@@ -14,43 +14,47 @@ import {take} from "rxjs";
   styleUrl: './autocomplete.component.css'
 })
 
-export class AutocompleteComponent implements OnInit{
+export class AutocompleteComponent implements OnInit, OnDestroy{
   data = signal<AutocompleteItem[]>([]);
   filteredData = signal<AutocompleteItem[]>([]);
   inputControl = new FormControl();
   isDropdownOpen = signal<boolean>(false);
   currentSelectionIndex = signal<number>(-1);
-  error = signal<string | null>( null);
-  constructor(private autocompleteDataService: AutocompleteDataService) {}
+  error = signal<string | null>(null);
+  private destroy$ = new Subject<void>();
+
+  constructor(private autocompleteDataService: AutocompleteDataService) {
+  }
 
 
- ngOnInit() {
-   this.getAutocompleteData();
+  ngOnInit() {
+    this.getAutocompleteData();
 
-   this.inputControl.valueChanges.pipe(
-     take(1)
-   ).subscribe({
-     next: (value) => {
-       this.filteredData.set(this._filter(value || ''));
-     }
-   });
+    this.inputControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
+      this.filteredData.set(this._filter(value || ''));
+    });
 
-   effect(() => {
-     console.log('Filtered data changed', this.filteredData());
-   });
- }
+    effect(() => {
+      console.log('Filtered data changed', this.filteredData());
+    });
+  }
 
- getAutocompleteData(): void {
-   this.autocompleteDataService.getAutocompleteData().pipe((take(1))).subscribe({
-     next: (data) => {
-       this.data.set(data);
-       this.filteredData.set(data);
-     },
-     error: (err) => {
-       this.error.set(`'Failed to fetch data, error:' ${err}`);
-     }
-   });
- }
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  getAutocompleteData(): void {
+    this.autocompleteDataService.getAutocompleteData().pipe((take(1))).subscribe({
+      next: (data) => {
+        this.data.set(data);
+        this.filteredData.set(data);
+      },
+      error: (err) => {
+        this.error.set(`'Failed to fetch data, error:' ${err}`);
+      }
+    });
+  }
 
   private _filter(value: string): AutocompleteItem[] {
     const filterValue = value.toLowerCase();
@@ -62,11 +66,11 @@ export class AutocompleteComponent implements OnInit{
   }
 
   onInputBlur(): void {
-    setTimeout(()=> this.isDropdownOpen.set(false), 100);//delay to allow lick event to fire
+    setTimeout(() => this.isDropdownOpen.set(false), 100);//delay to allow lick event to fire
   }
 
   onKeyDown(event: KeyboardEvent): void {
-    if(this.isDropdownOpen()) {
+    if (this.isDropdownOpen()) {
       switch (event.key) {
         case 'ArrowDown':
           this.currentSelectionIndex.set((this.currentSelectionIndex() + 1) % this.filteredData().length);
@@ -79,17 +83,17 @@ export class AutocompleteComponent implements OnInit{
             this.selectItem(this.filteredData()[this.currentSelectionIndex()]);
           }
           break;
-          case 'Escape':
-            this.isDropdownOpen.set(false);
-            break;
+        case 'Escape':
+          this.isDropdownOpen.set(false);
+          break;
       }
-    } else if ( event.key === 'ArrowDown') {
+    } else if (event.key === 'ArrowDown') {
       this.isDropdownOpen.set(true);
     }
   }
 
-
   selectItem(item: AutocompleteItem): void {
-    console.log('item', item);
+    this.inputControl.setValue(item.title);
+    this.isDropdownOpen.set(false);
   }
 }

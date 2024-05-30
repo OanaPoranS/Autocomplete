@@ -1,6 +1,6 @@
 <div class="container">
   <input type="text"
-         [placeholder]="'Search...'"
+         [placeholder]="inputControl.value?.title || 'Type to search...'"
          [formControl]="inputControl"
          (focus)="onInputFocus()"
          (blur)="onInputBlur()"
