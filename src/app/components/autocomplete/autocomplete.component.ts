@@ -26,10 +26,21 @@ export class AutocompleteComponent implements OnInit{
 
  ngOnInit() {
    this.getAutocompleteData();
+
+   this.inputControl.valueChanges.pipe(
+     take(1)
+   ).subscribe({
+     next: (value) => {
+       this.filteredData.set(this._filter(value || ''));
+     }
+   });
+
+   effect(() => {
+     console.log('Filtered data chaged', this.filteredData());
+   });
  }
 
-
- getAutocompleteData() {
+ getAutocompleteData(): void {
    this.autocompleteDataService.getAutocompleteData().pipe((take(1))).subscribe({
      next: (data) => {
        this.data.set(data);
@@ -41,7 +52,17 @@ export class AutocompleteComponent implements OnInit{
    });
  }
 
-  selectItem(item: AutocompleteItem) {
+  private _filter(value: string): AutocompleteItem[] {
+    const filterValue = value.toLowerCase();
+    return this.data().filter(item => item.title.toLowerCase().includes(filterValue));
+  }
+
+  onInputFocus(): void {
+    this.isDropdownOpen.set(true);
+  }
+
+
+  selectItem(item: AutocompleteItem): void {
     console.log('item', item);
   }
 }

@@ -2,7 +2,7 @@
   <input type="text"
          [placeholder]="'Search...'"
          [formControl]="inputControl"
-
+         (focus)="onInputFocus()"
         />
 
   <ul *ngIf="isDropdownOpen()">
