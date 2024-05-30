@@ -13,7 +13,7 @@ import {AutocompleteItem} from "./models/autocomplete.model";
   styleUrl: './app.component.css'
 })
 export class AppComponent implements OnInit {
-  title = 'Autocomplete with Angular';
+  title = 'Autocomplete with Signals';
   data = signal<AutocompleteItem[]>([]);
   filteredData = signal<AutocompleteItem[]>([]);
   error = signal<string | null>(null);

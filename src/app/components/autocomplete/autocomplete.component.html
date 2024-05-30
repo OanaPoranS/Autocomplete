@@ -1,14 +1,15 @@
 <div class="container">
-  <input type="text"
-         [placeholder]="'Type to search...'"
-         [formControl]="inputControl"
-         (focus)="onInputFocus()"
-         (blur)="onInputBlur()"
-         (keydown)="onKeyDown($event)"
-        />
-
-  <ul *ngIf="isDropdownOpen()">
-    <li
+  <input
+    class="input"
+    type="text"
+    [placeholder]="'Type to search...'"
+    [formControl]="inputControl"
+    (focus)="onInputFocus()"
+    (blur)="onInputBlur()"
+    (keydown)="onKeyDown($event)"
+  />
+  <ul *ngIf="isDropdownOpen()" class="dropdown">
+    <li class="list"
       *ngFor="let item of filteredData(); let i = index"
         (click)="selectItem(item)"
         [class.active]="i === currentSelectionIndex()">

@@ -1,4 +1,4 @@
-import {Component, OnInit, signal, OnDestroy, Input} from '@angular/core';
+import {Component, OnInit, signal, OnDestroy, Input, ElementRef} from '@angular/core';
 import {FormControl, ReactiveFormsModule} from '@angular/forms';
 import {NgForOf, NgIf} from "@angular/common";
 import {Subject, take, takeUntil} from "rxjs";
@@ -21,6 +21,7 @@ export class AutocompleteComponent implements OnInit, OnDestroy {
   currentSelectionIndex = signal<number>(-1);
   private destroy$ = new Subject<void>();
 
+  constructor(private elementRef: ElementRef) {}
   ngOnInit() {
     this.inputControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
       this.filteredData.set(this._filter(value || ''));
@@ -50,9 +51,12 @@ export class AutocompleteComponent implements OnInit, OnDestroy {
       switch (event.key) {
         case 'ArrowDown':
           this.currentSelectionIndex.set((this.currentSelectionIndex() + 1) % this.filteredData().length);
+          this.scrollIntoView();
+          console.log('ArrowDown', (this.currentSelectionIndex() + 1) % this.filteredData().length);
           break;
         case 'ArrowUp':
           this.currentSelectionIndex.set((this.currentSelectionIndex() - 1 + this.filteredData().length) % this.filteredData().length);
+          this.scrollIntoView();
           break;
         case 'Enter':
           if (this.currentSelectionIndex() >= 0 && this.currentSelectionIndex() < this.filteredData().length) {
@@ -66,6 +70,13 @@ export class AutocompleteComponent implements OnInit, OnDestroy {
     } else if (event.key === 'ArrowDown') {
       this.isDropdownOpen.set(true);
     }
+  }
+
+  //scrollIntoView is ugly, since we are not using a virtual scroll, this is a workaround to scroll to the selected item with the keyboard
+  scrollIntoView() {
+    const listElement = this.elementRef.nativeElement.querySelector('ul');
+    const itemElement = listElement.children[this.currentSelectionIndex()];
+    itemElement.scrollIntoView({ block: 'nearest' });
   }
 
   selectItem(item: AutocompleteItem): void {
