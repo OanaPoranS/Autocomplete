@@ -36,7 +36,7 @@ export class AutocompleteComponent implements OnInit{
    });
 
    effect(() => {
-     console.log('Filtered data chaged', this.filteredData());
+     console.log('Filtered data changed', this.filteredData());
    });
  }
 
@@ -59,6 +59,33 @@ export class AutocompleteComponent implements OnInit{
 
   onInputFocus(): void {
     this.isDropdownOpen.set(true);
+  }
+
+  onInputBlur(): void {
+    setTimeout(()=> this.isDropdownOpen.set(false), 100);//delay to allow lick event to fire
+  }
+
+  onKeyDown(event: KeyboardEvent): void {
+    if(this.isDropdownOpen()) {
+      switch (event.key) {
+        case 'ArrowDown':
+          this.currentSelectionIndex.set((this.currentSelectionIndex() + 1) % this.filteredData().length);
+          break;
+        case 'ArrowUp':
+          this.currentSelectionIndex.set((this.currentSelectionIndex() - 1 + this.filteredData().length) % this.filteredData().length);
+          break;
+        case 'Enter':
+          if (this.currentSelectionIndex() >= 0 && this.currentSelectionIndex() < this.filteredData().length) {
+            this.selectItem(this.filteredData()[this.currentSelectionIndex()]);
+          }
+          break;
+          case 'Escape':
+            this.isDropdownOpen.set(false);
+            break;
+      }
+    } else if ( event.key === 'ArrowDown') {
+      this.isDropdownOpen.set(true);
+    }
   }
 
 
